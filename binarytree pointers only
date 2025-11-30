@@ -1,0 +1,267 @@
+#include <iostream>
+#include <climits>
+#include <queue>
+#include <stack>
+using namespace std;
+
+struct BT {
+    BT *left;
+    BT *right;
+    int value;
+
+    BT() {
+        left=right=nullptr;
+        value= INT_MIN;
+    }
+
+    void insert(int val) {
+        if (this->value==INT_MIN) {
+            this->value=val;
+            return;
+        }
+
+        queue<BT*> nodes;
+        nodes.push(this);
+
+        while (!nodes.empty()) {
+            BT* node=nodes.front();
+            nodes.pop();
+
+            if (!node->left) {
+                node->left=new BT();
+                node->left->value=val;
+                return;
+            }
+
+            if (!node->right) {
+                node->right=new BT();
+                node->right->value=val;
+                return;
+            }
+
+            nodes.push(node->left);
+            nodes.push(node->right);
+        }
+    }
+
+    BT* find(int val) {
+        if (this->value==INT_MIN) return nullptr;
+
+        queue<BT*> nodes;
+        nodes.push(this);
+
+        while (!nodes.empty()) {
+            BT* node=nodes.front();
+            nodes.pop();
+
+            if (node->value==val) return node;
+            if (node->left) nodes.push(node->left);
+            if (node->right) nodes.push(node->right);
+        }
+
+        return nullptr;
+    }
+
+    int sum() {
+        if (this->value==INT_MIN) return 0;
+
+        int sum=0;
+        sum+=this->value;
+        if (this->left) sum+=this->left->sum();
+        if (this->right) sum+=this->right->sum();
+
+        return sum;
+    }
+
+    ~BT(){};
+};
+
+struct BST {
+    BST *left;
+    BST *right;
+    int value;
+
+    BST() {
+        left = right = nullptr;
+        value=INT_MIN;
+    }
+
+    void insert(int val) {
+        if (this->value == INT_MIN) {
+            this->value=val;
+            return;
+        }
+
+        if (val<this->value) {
+            if (!this->left) {
+                this->left=new BST();
+                this->left->value=val;
+            }else this->left->insert(val);
+        }else {
+            if (!this->right) {
+                this->right=new BST();
+                this->right->value=val;
+            }else this->right->insert(val);
+        }
+    }
+
+    BST* find(int val) {
+        if (this->value==INT_MIN) return nullptr;
+
+        if (this->value==val) return this;
+
+        if (val<this->value && this->left) return this->left->find(val);
+        if (val>this->value && this->right) return this->right->find(val);
+        return nullptr;
+    }
+
+    ~BST() {}
+};
+
+//recursive DFTs
+void preorder_print(auto* node) {
+    if (node->value==INT_MIN) return;
+
+    cout << node->value << ' ';
+    if (node->left) preorder_print(node->left);
+    if (node->right) preorder_print(node->right);
+}
+
+void inorder_print(auto* node) {
+    if (node->value==INT_MIN) return;
+
+    if (node->left) inorder_print(node->left);
+    cout << node->value << ' ';
+    if (node->right) inorder_print(node->right);
+}
+
+void postorder_print(auto* node) {
+    if (node->value==INT_MIN) return;
+
+    if (node->left) postorder_print(node->left);
+    if (node->right) postorder_print(node->right);
+    cout << node->value << ' ';
+}
+
+
+//non-recursive DFTs
+void preorder_print_iterative(auto* n) {
+    if (n->value==INT_MIN) return;
+
+    stack<decltype(n)> nodes;
+    nodes.push(n);
+
+    while (!nodes.empty()) {
+        auto* node=nodes.top();
+        nodes.pop();
+        cout << node->value << " ";
+        if (node->right)  nodes.push(node->right);
+        if (node->left) nodes.push(node->left);
+    }
+}
+
+void inorder_print_iterative(auto* n) {
+    if (n->value==INT_MIN) return;
+
+    stack<decltype(n)> nodes;
+    auto* node=n;
+
+    while (node || !nodes.empty()) {
+        while (node) {
+            nodes.push(node);
+            node=node->left;
+        }
+
+        node=nodes.top();
+        nodes.pop();
+        cout << node->value << " ";
+        node=node->right;
+    }
+}
+
+void postorder_print_iterative(auto* n) {
+    if (n->value==INT_MIN) return;
+
+    stack<decltype(n)> s1, s2;
+    s1.push(n);
+
+    while (!s1.empty()) {
+        auto* node=s1.top();
+        s1.pop();
+        s2.push(node);
+        if (node->left) s1.push(node->left);
+        if (node->right) s1.push(node->right);
+    }
+
+    while (!s2.empty()) {
+        cout << s2.top()->value << " ";
+        s2.pop();
+    }
+}
+
+//non-recursive BFT
+void BFT_print(auto* n) {
+    if (n->value==INT_MIN) return;
+
+    queue<decltype(n)> nodes;
+    nodes.push(n);
+
+    while (!nodes.empty()) {
+        auto* node=nodes.front();
+        cout << node->value << ' ';
+        nodes.pop();
+        if (node->left) nodes.push(node->left);
+        if (node->right) nodes.push(node->right);
+    }
+}
+
+void run_input(auto* root) {
+    int input;
+
+    cout << "Enter elements(enter any character to end input): " << '\n';
+    while (cin >> input) {
+        root->insert(input);
+    }
+
+    cin.clear();
+    cin.ignore(INT_MAX, '\n');
+
+    cout << "BFT: ";
+    BFT_print(root);
+    cout << '\n';
+    cout << "DFT - preorder recursive: ";
+    preorder_print(root);
+    cout << '\n';
+    cout << "DFT - preorder iterative: ";
+    preorder_print_iterative(root);
+    cout << '\n';
+    cout << "DFT - inorder recursive: ";
+    inorder_print(root);
+    cout << '\n';
+    cout << "DFT - inorder iterative: ";
+    inorder_print_iterative(root);
+    cout << '\n';
+    cout << "DFT - postorder recursive: ";
+    postorder_print(root);
+    cout << '\n';
+    cout << "DFT - postorder iterative: ";
+    postorder_print_iterative(root);
+    cout << '\n';
+
+    cout << "Enter a value that you want to find in the tree: " << '\n';
+    cin >> input;
+    auto* node=root->find(input);
+    node ? cout << node->value << '\n' : cout << "Element not found\n";
+}
+
+int main() {
+    BST *root = new BST;
+    BT *root2 = new BT;
+
+    run_input(root);
+
+    run_input(root2);
+    cout << "Sum of elements in BT: " << root2->sum() << '\n';
+
+    return 0;
+}
