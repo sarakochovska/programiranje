@@ -1,0 +1,138 @@
+#include <iostream>
+#include <climits>
+using namespace std;
+
+class AVLTree {
+    int key;
+    AVLTree* leftChild;
+    AVLTree* rightChild;
+    int nodeHeight;
+
+    void updateHeight() {
+        int hLeft  = leftChild  ? leftChild->nodeHeight  : -1;
+        int hRight = rightChild ? rightChild->nodeHeight : -1;
+        nodeHeight = max(hLeft, hRight) + 1;
+    }
+
+public:
+    AVLTree() {
+        key = INT_MIN;
+        leftChild = rightChild = nullptr;
+        nodeHeight = -1;
+    }
+
+    AVLTree* insert(int newKey) {
+        if (nodeHeight == -1) {
+            key = newKey;
+            leftChild = rightChild = nullptr;
+            nodeHeight = 0;
+            return rebalance();
+        }
+
+        if (newKey < key) {
+            if (!leftChild) leftChild = new AVLTree;
+            leftChild = leftChild->insert(newKey);
+        } else {
+            if (!rightChild) rightChild = new AVLTree;
+            rightChild = rightChild->insert(newKey);
+        }
+
+        return rebalance();
+    }
+
+    void printPreorder() const {
+        if (nodeHeight == -1) {
+            cout << "Empty tree\n";
+            return;
+        }
+
+        cout << key << " ";
+        if (leftChild) leftChild->printPreorder();
+        if (rightChild) rightChild->printPreorder();
+    }
+
+    AVLTree* rotateRight() {
+        AVLTree* newRoot = leftChild;
+
+        leftChild = newRoot->rightChild;
+        newRoot->rightChild = this;
+
+        updateHeight();
+        newRoot->updateHeight();
+
+        return newRoot;
+    }
+
+    AVLTree* rotateLeft() {
+        AVLTree* newRoot = rightChild;
+
+        rightChild = newRoot->leftChild;
+        newRoot->leftChild = this;
+
+        updateHeight();
+        newRoot->updateHeight();
+
+        return newRoot;
+    }
+
+    AVLTree* rotateLeftRight() {
+        leftChild = leftChild->rotateLeft();
+        return rotateRight();
+    }
+
+    AVLTree* rotateRightLeft() {
+        rightChild = rightChild->rotateRight();
+        return rotateLeft();
+    }
+
+    AVLTree* rebalance() {
+        updateHeight();
+
+        int hLeft  = leftChild  ? leftChild->nodeHeight  : -1;
+        int hRight = rightChild ? rightChild->nodeHeight : -1;
+
+        // Left-heavy
+        if (hLeft > hRight + 1) {
+            int hLL = leftChild->leftChild  ? leftChild->leftChild->nodeHeight  : -1;
+            int hLR = leftChild->rightChild ? leftChild->rightChild->nodeHeight : -1;
+
+            if (hLL >= hLR) return rotateRight();
+            return rotateLeftRight();
+        }
+
+        // Right-heavy
+        if (hRight > hLeft + 1) {
+            int hRL = rightChild->leftChild  ? rightChild->leftChild->nodeHeight  : -1;
+            int hRR = rightChild->rightChild ? rightChild->rightChild->nodeHeight : -1;
+
+            if (hRR >= hRL) return rotateLeft();
+            return rotateRightLeft();
+        }
+
+        return this;
+    }
+
+    ~AVLTree() {
+        if (leftChild) delete leftChild;
+        if (rightChild) delete rightChild;
+    }
+};
+
+
+int main() {
+    AVLTree* root = new AVLTree;
+    int value;
+
+    cout << "Enter values for AVL tree nodes:\n";
+    while (cin >> value) {
+        root = root->insert(value);
+    }
+
+    cin.clear();
+    cin.ignore(INT_MAX, '\n');
+
+    root->printPreorder();
+
+    delete root;
+    return 0;
+}
