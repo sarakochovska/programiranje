@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+void printTree(const vector<int>& segmentTree) {
+    for (int i = 0; i < segmentTree.size(); i++)
+        cout << segmentTree[i] << ", ";
+    cout << '\n';
+}
+
+// BUILD SEGMENT TREE (MIN)
+void buildTree(
+    vector<int>& segmentTree,
+    const vector<int>& data,
+    int nodeIndex,
+    int leftBound,
+    int rightBound
+) {
+    if (leftBound == rightBound) {
+        segmentTree[nodeIndex] = data[leftBound];
+        return;
+    }
+
+    int mid = (leftBound + rightBound) / 2;
+
+    buildTree(segmentTree, data, nodeIndex * 2, leftBound, mid);
+    buildTree(segmentTree, data, nodeIndex * 2 + 1, mid + 1, rightBound);
+
+    segmentTree[nodeIndex] =
+        min(segmentTree[nodeIndex * 2], segmentTree[nodeIndex * 2 + 1]);
+}
+
+// RANGE MIN QUERY
+int rangeMinQuery(
+    const vector<int>& segmentTree,
+    int queryLeft,
+    int queryRight,
+    int leftBound,
+    int rightBound,
+    int nodeIndex
+) {
+    if (queryLeft <= leftBound && rightBound <= queryRight)
+        return segmentTree[nodeIndex];
+
+    if (queryRight < leftBound || queryLeft > rightBound)
+        return INT_MAX;
+
+    int mid = (leftBound + rightBound) / 2;
+
+    return min(
+        rangeMinQuery(segmentTree, queryLeft, queryRight,
+                      leftBound, mid, nodeIndex * 2),
+        rangeMinQuery(segmentTree, queryLeft, queryRight,
+                      mid + 1, rightBound, nodeIndex * 2 + 1)
+    );
+}
+
+int main() {
+    vector<int> values = {3, 2, 4, 1, 8, 16, 11};
+    int size = values.size();
+
+    vector<int> segmentTree(4 * size, INT_MAX);
+
+    buildTree(segmentTree, values, 1, 0, size - 1);
+
+    cout << rangeMinQuery(segmentTree, 2, 5, 0, size - 1, 1) << '\n';
+
+    return 0;
+}
