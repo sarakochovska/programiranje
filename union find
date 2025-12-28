@@ -1,0 +1,184 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+//==================== DISJOINT SET (UNION-FIND) ====================
+
+class DisjointSet {
+    vector<int> parentInfo;   // < 0 => root, value = -size or -rank
+
+public:
+    DisjointSet(int count) {
+        parentInfo.resize(count, -1);
+    }
+
+    // Simple find
+    int findRoot(int node) {
+        if (parentInfo[node] < 0)
+            return node;
+        return findRoot(parentInfo[node]);
+    }
+
+    // Find with path compression
+    int findRootCompressed(int node) {
+        if (parentInfo[node] < 0)
+            return node;
+        return parentInfo[node] = findRootCompressed(parentInfo[node]);
+    }
+
+    void unionArbitrary(int rootA, int rootB) {
+        if (rootA == rootB) return;
+        parentInfo[rootA] = rootB;
+    }
+
+    // Union by size
+    void unionBySize(int rootA, int rootB) {
+        if (rootA == rootB) return;
+
+        if (parentInfo[rootA] < parentInfo[rootB]) {
+            parentInfo[rootA] += parentInfo[rootB];
+            parentInfo[rootB] = rootA;
+        } else {
+            parentInfo[rootB] += parentInfo[rootA];
+            parentInfo[rootA] = rootB;
+        }
+    }
+
+    // Union by rank
+    void unionByRank(int rootA, int rootB) {
+        if (rootA == rootB) return;
+
+        if (parentInfo[rootA] < parentInfo[rootB]) {
+            parentInfo[rootB] = rootA;
+        } else {
+            if (parentInfo[rootA] == parentInfo[rootB])
+                parentInfo[rootB]--;
+            parentInfo[rootA] = rootB;
+        }
+    }
+
+    void unite(int a, int b, const string& unionType, const string& findType) {
+        int rootA, rootB;
+
+        if (findType == "simple") {
+            rootA = findRoot(a);
+            rootB = findRoot(b);
+        } else {
+            rootA = findRootCompressed(a);
+            rootB = findRootCompressed(b);
+        }
+
+        if (unionType == "arbitrary") unionArbitrary(rootA, rootB);
+        else if (unionType == "size") unionBySize(rootA, rootB);
+        else unionByRank(rootA, rootB);
+    }
+};
+
+//==================== CLOSED ISLANDS ====================
+
+int countClosedIslands(const int* matrix, int rowCount, int colCount) {
+    int borderNode = rowCount * colCount;
+    DisjointSet ds(rowCount * colCount + 1);
+
+    for (int r = 0; r < rowCount; r++) {
+        for (int c = 0; c < colCount; c++) {
+            int idx = r * colCount + c;
+            if (matrix[idx] == 1) continue;
+
+            if (r == 0 || r == rowCount - 1 || c == 0 || c == colCount - 1)
+                ds.unite(idx, borderNode, "size", "simple");
+
+            if (c + 1 < colCount && matrix[r * colCount + c + 1] == 0)
+                ds.unite(idx, r * colCount + c + 1, "size", "simple");
+
+            if (r + 1 < rowCount && matrix[(r + 1) * colCount + c] == 0)
+                ds.unite(idx, (r + 1) * colCount + c, "size", "simple");
+        }
+    }
+
+    set<int> uniqueIslands;
+    int borderRoot = ds.findRootCompressed(borderNode);
+
+    for (int i = 0; i < rowCount * colCount; i++) {
+        if (matrix[i] == 0) {
+            int root = ds.findRootCompressed(i);
+            if (root != borderRoot)
+                uniqueIslands.insert(root);
+        }
+    }
+
+    return uniqueIslands.size();
+}
+
+//==================== PATH EXISTS IN GRAPH ====================
+
+bool existsPath(const vector<vector<int>>& connections, int start, int end, int nodeCount) {
+    DisjointSet graphDS(nodeCount);
+
+    for (int i = 0; i < connections.size(); i++)
+        graphDS.unite(connections[i][0], connections[i][1], "rank", "smart");
+
+    return graphDS.findRootCompressed(start) ==
+           graphDS.findRootCompressed(end);
+}
+
+//==================== GCD SORT ====================
+
+int computeGCD(int x, int y) {
+    if (y == 0) return x;
+    return computeGCD(y, x % y);
+}
+
+bool canBeGCDSorted(const vector<int>& values) {
+    DisjointSet ds(values.size());
+    vector<pair<int,int>> ordered;
+
+    for (int i = 0; i < values.size(); i++)
+        for (int j = i + 1; j < values.size(); j++)
+            if (computeGCD(values[i], values[j]) > 1)
+                ds.unite(i, j, "rank", "smart");
+
+    for (int i = 0; i < values.size(); i++)
+        ordered.push_back({values[i], i});
+
+    sort(ordered.begin(), ordered.end());
+
+    for (int i = 0; i < values.size(); i++)
+        if (ds.findRootCompressed(i) !=
+            ds.findRootCompressed(ordered[i].second))
+            return false;
+
+    return true;
+}
+
+//==================== MAIN ====================
+
+int main() {
+
+    int terrain[5 * 8] = {
+        1,1,1,1,1,1,1,0,
+        1,0,0,0,0,1,1,0,
+        1,0,1,0,1,1,1,0,
+        1,0,0,0,0,1,0,1,
+        1,1,1,1,1,1,1,0
+    };
+
+    cout << "Closed islands: "
+         << countClosedIslands(terrain, 5, 8) << '\n';
+
+    vector<vector<int>> graphEdges = {
+        {0,1},{0,2},{3,5},{5,4},{4,3}
+    };
+
+    cout << "Path exists: "
+         << existsPath(graphEdges, 0, 5, 6) << '\n';
+
+    vector<int> arrayVals = {5, 2, 6, 2};
+
+    cout << "Can be GCD sorted: "
+         << canBeGCDSorted(arrayVals) << '\n';
+
+    return 0;
+}
