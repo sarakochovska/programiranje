@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void increment_coin(int &coin, vector<pair<int, int>> &combination) {
+    for (auto &c: combination) if (c.first==coin) c.second++;
+}
+
+bool is_equal(vector<pair<int,int>> &v1, vector<pair<int,int>> &v2) {
+    if (v1.size() != v2.size()) return false;
+
+    sort(v1.begin(), v1.end());
+    sort(v2.begin(), v2.end());
+    return v1==v2;
+}
+
+void filter_duplicates(vector<vector<pair<int, int>>> &combinations){
+    vector<vector<pair<int, int>>> combinations_filtered;
+    bool duplicate = false;
+
+    for (int i=0; i<combinations.size(); i++) {
+        for (int j=0; j<combinations.size(); j++) {
+            if (i==j) continue;
+            if (is_equal(combinations[i], combinations[j])) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) combinations_filtered.push_back(combinations[i]);
+        duplicate = false;
+    }
+
+    combinations = combinations_filtered;
+}
+
+vector<vector<pair<int, int>>> change_combinations(int change, vector<int> &coins) {
+    vector<vector<pair<int, int>>> combinations;
+
+    vector<pair<int, int>> zero;
+    for (auto c: coins) zero.push_back({c,0});
+
+    if (change==0) combinations.push_back(zero);
+    else {
+        for (int c: coins) {
+            if ((change-c)>=0) {
+                auto s=change_combinations((change-c), coins);
+                for (auto combination : s) {
+                    increment_coin(c, combination);
+                    combinations.push_back(combination);
+                }
+            }
+        }
+    }
+
+    filter_duplicates(combinations);
+    return combinations;
+}
+
+
+int main() {
+    vector<int> coins;
+    int coin, change;
+
+    cout << "enter valid coins (pres any character to end input): " << '\n';
+    while (cin >> coin) coins.push_back(coin);
+    sort(coins.begin(), coins.end());
+
+    cin.clear();
+    cin.ignore(1000, '\n');
+
+    cout << "enter change: " << '\n';
+    cin >> change;
+
+    vector<vector<pair<int, int>>> combinations=change_combinations(change, coins);
+
+    for (auto v: combinations) {
+        for (auto s: v) {
+            cout << s.first << "x" << s.second << ",";
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}
