@@ -1,0 +1,126 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <tuple>
+#include <cmath>
+#include <climits>
+#include <iomanip>
+using namespace std;
+
+//squared distance between two 3D points
+int squaredDistance(const tuple<int,int,int>& p1,
+                    const tuple<int,int,int>& p2) {
+
+    int dx = get<0>(p1) - get<0>(p2);
+    int dy = get<1>(p1) - get<1>(p2);
+    int dz = get<2>(p1) - get<2>(p2);
+
+    return dx*dx + dy*dy + dz*dz;
+}
+
+//devide step
+int dividePoints(vector<tuple<int,int,int>>& points) {
+
+    if (points.size() <= 3) {
+        int minDist = INT_MAX;
+        for (int i = 0; i < points.size(); i++) {
+            for (int j = i + 1; j < points.size(); j++) {
+                minDist = min(minDist,
+                              squaredDistance(points[i], points[j]));
+            }
+        }
+        return minDist;
+    }
+
+    int middleIndex = points.size() / 2;
+
+    vector<tuple<int,int,int>> leftHalf(points.begin(),
+                                        points.begin() + middleIndex);
+    vector<tuple<int,int,int>> rightHalf(points.begin() + middleIndex,
+                                         points.end());
+
+    int leftMin  = dividePoints(leftHalf);
+    int rightMin = dividePoints(rightHalf);
+
+    return min(leftMin, rightMin);
+}
+
+//merge step
+int conquerMerge(vector<tuple<int,int,int>>& allPoints,
+                 int leftIndex,
+                 int rightIndex,
+                 int middleIndex) {
+
+    vector<tuple<int,int,int>> leftPart(allPoints.begin() + leftIndex,
+                                        allPoints.begin() + middleIndex + 1);
+
+    vector<tuple<int,int,int>> rightPart(allPoints.begin() + middleIndex + 1,
+                                         allPoints.begin() + rightIndex + 1);
+
+    int bestDistance = min(dividePoints(leftPart),
+                           dividePoints(rightPart));
+
+    int splitX = get<0>(allPoints[middleIndex]);
+
+    vector<tuple<int,int,int>> candidateStrip;
+
+    for (int i = leftIndex; i <= rightIndex; i++) {
+        int dx = get<0>(allPoints[i]) - splitX;
+        if (dx*dx < bestDistance)
+            candidateStrip.push_back(allPoints[i]);
+    }
+
+    sort(candidateStrip.begin(), candidateStrip.end(),
+         [](const tuple<int,int,int>& a,
+            const tuple<int,int,int>& b) {
+                return get<1>(a) < get<1>(b);
+         });
+
+    for (int i = 0; i < candidateStrip.size(); i++) {
+        for (int j = i + 1; j < candidateStrip.size(); j++) {
+
+            int dy = get<1>(candidateStrip[j]) -
+                     get<1>(candidateStrip[i]);
+
+            int dz = get<2>(candidateStrip[j]) -
+                     get<2>(candidateStrip[i]);
+
+            if (dy*dy < bestDistance &&
+                dz*dz < bestDistance) {
+
+                bestDistance = min(bestDistance,
+                                   squaredDistance(candidateStrip[i],
+                                                   candidateStrip[j]));
+            }
+        }
+    }
+
+    return bestDistance;
+}
+
+int main() {
+
+    int numberOfPoints;
+    cin >> numberOfPoints;
+
+    vector<tuple<int,int,int>> pointList;
+
+    for (int i = 0; i < numberOfPoints; i++) {
+        int xCoord, yCoord, zCoord;
+        cin >> xCoord >> yCoord >> zCoord;
+        pointList.push_back({xCoord, yCoord, zCoord});
+    }
+
+    sort(pointList.begin(), pointList.end()); // sort by x
+
+    int resultSquared =
+        conquerMerge(pointList,
+                     0,
+                     numberOfPoints - 1,
+                     (numberOfPoints - 1) / 2);
+
+    cout << fixed << setprecision(4)
+         << sqrt(resultSquared);
+
+    return 0;
+}
