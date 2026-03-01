@@ -51,9 +51,7 @@ int main() {
         return 1;
     }
 
-    // =====================
-    // 🔹 COUNT FREQUENCIES
-    // =====================
+ 
     int freq[256] = {0};
     unsigned char c;
 
@@ -64,9 +62,7 @@ int main() {
     infile.clear();
     infile.seekg(0);
 
-    // =====================
-    // 🔹 BUILD HUFFMAN TREE
-    // =====================
+   
     priority_queue<Node*, vector<Node*>, Compare> pq;
 
     for (int i = 0; i < 256; i++) {
@@ -88,15 +84,11 @@ int main() {
 
     Node* root = pq.top();
 
-    // =====================
-    // 🔹 GENERATE CODES
-    // =====================
+   
     string codes[256];
     generateCodes(root, "", codes);
 
-    // =====================
-    // 🔹 ENCODE FILE
-    // =====================
+  
     ofstream outfile("anna_encoded.bin", ios::binary);
     ofstream bitfile("anna_bits.txt");
 
@@ -140,19 +132,17 @@ int main() {
 
     cout << "Compression complete.\n";
 
-    // =====================
-    // 🔹 DECODE FILE
-    // =====================
+    //decode
     ifstream encoded("anna_encoded.bin", ios::binary);
     ofstream decoded("anna_decoded.txt", ios::binary);
 
-    // Read frequency table
+    
     int readFreq[256];
     for (int i = 0; i < 256; i++) {
         encoded.read((char*)&readFreq[i], sizeof(int));
     }
 
-    // Rebuild Huffman tree
+    
     priority_queue<Node*, vector<Node*>, Compare> pq2;
 
     for (int i = 0; i < 256; i++) {
@@ -170,7 +160,7 @@ int main() {
     Node* decodeRoot = pq2.top();
     Node* current = decodeRoot;
 
-    // Count total characters
+    
     int totalChars = 0;
     for (int i = 0; i < 256; i++)
         totalChars += readFreq[i];
