@@ -1,0 +1,21 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int coins[]={1, 3, 11, 21};
+
+int change_tab(int c) {
+    vector<int> change(c+1, INT_MAX);
+    change[0]=0;
+    for (int i=1; i<=c; i++)
+        for (int coin : coins)
+            if (i-coin>=0 && change[i-coin]!=INT_MAX)
+                change[i]=min(change[i], change[i-coin]+1);
+    return change[c];
+}
+
+int main() {
+    int c[]={124, 226, 121};
+    for (int ch : c)
+        cout<<change_tab(ch)<<'\n';
+    return 0;
+}
