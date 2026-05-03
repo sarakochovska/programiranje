@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+int budget, categories, items;
+int main() {
+    cin >> budget >> categories;
+    vector<vector<int>> prices(categories);
+    for (int i = 0; i < categories; i++) {
+        cin >> items;
+        prices[i].resize(items);
+        for (int j = 0; j < items; j++) cin >> prices[i][j];
+    }
+    vector<vector<int>> p(categories+1, vector<int>(budget+1, 0));
+    p[0][0] = 1;
+    for (int i = 0; i < categories; i++) {
+        for (int j = 0; j <= budget; j++) {
+            if (!p[i][j]) continue;
+            for (int price : prices[i]) {
+                if (j + price <= budget) p[i+1][j+price] = 1;
+            }
+        }
+    }
+    for (int i = budget; i >= 0; i--) {
+        if (p[categories][i]) {
+            cout << i;
+            break;
+        }
+    }
+    return 0;
+}
