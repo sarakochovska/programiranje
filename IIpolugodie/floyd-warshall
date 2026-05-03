@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    int nodes;
+    cin >> nodes;
+    vector<vector<int>> dist(nodes, vector<int>(nodes));
+    for (int i = 0; i < nodes; i++) {
+        for (int j = 0; j < nodes; j++) {
+            cin >> dist[i][j];
+            if (i == j) dist[i][j] = 0;
+            if (dist[i][j] == 0 && i != j) dist[i][j] = INT_MAX;
+        }
+    }
+    for (int mid = 0; mid < nodes; mid++) {
+        for (int src = 0; src < nodes; src++) {
+            for (int dst = 0; dst < nodes; dst++) {
+                if (dist[src][mid] < INT_MAX && dist[mid][dst] < INT_MAX) {
+                    dist[src][dst] = min(dist[src][dst], dist[src][mid] + dist[mid][dst]);
+                }
+            }
+        }
+    }
+    for (int src = 0; src < nodes; src++) {
+        for (int dst = 0; dst < nodes; dst++) {
+            if (dist[src][dst] >= INT_MAX) cout << "inf. ";
+            else cout << dist[src][dst] << " ";
+        }
+        cout << '\n';
+    }
+    return 0;
+}
